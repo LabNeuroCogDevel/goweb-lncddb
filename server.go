@@ -6,59 +6,61 @@ import (
   "net/http"
   "net/http/httputil"
   "net/url"
-  "os"
   "log"
-  "strconv"
+  "flag"
+  "fmt"
+  "strings"
+ // "github.com/gorilla/mux" // we need regexp routes
 )
 
 var serveport string = "3001"
 var proxyuri *url.URL
 
-/* 
- * Proxy type and 'handle' for HTTP
- * */
+//////////////////////
+// Proxy type and 'handle' for HTTP
+//////////////////////
+
 type Proxy struct{
   proxy *httputil.ReverseProxy
+  proxypath string
 }
 func (p *Proxy)  handle (w http.ResponseWriter, r *http.Request) {
     //http.HandlerFunc 
+    r.URL.Path = strings.Replace(r.URL.Path,p.proxypath,"",1)
+    log.Printf(r.URL.Path)
     p.proxy.ServeHTTP(w,r)
 }
 
-func usage(){
- log.Fatalf("USAGE: %s proxyuri [serverport=%s]",os.Args[0],serveport)
- //os.Exit(1)
-}
-
+//////////////////////
 
 func main(){
-  // must provide other server. can provide port to serve on
-  switch len(os.Args) {
-   case 2:
-    // set proxyuri, always done not here
-   case 3:
-    sp,err  := strconv.Atoi(os.Args[2])
-    if(err != nil) { usage() }
-    serveport = strconv.Itoa(sp)
 
-   default:
-    usage()
-  }
+  serveport   := flag.Int   ("port"  ,3001,                 "port to run proxy server on")
+  proxyuristr := flag.String("uri"   ,"http://0.0.0.0:3000","uri of server to be proxied")
+  proxypath   := flag.String("ppath", "db/",                 "db route")
+  staticpath  := flag.String("static","./static",           "filesystem path to static web assests")
+  flag.Parse()
 
-  proxyuri,err := url.Parse(os.Args[1])
-  if(err != nil){
-   usage()
-  }
+  proxyuri,err := url.Parse(*proxyuristr)
+  if(err != nil){ log.Fatalf("%v",err) }
 
+  // add ":" to port to get eg ":3001"
+  port := fmt.Sprintf(":%d",*serveport)
+  log.Printf("Serving %s on %s, proxy @ '/%s'",proxyuri,port,*proxypath)
+
+
+  // tried to do without type+handler
   // *httputil.ReverseProxy
-  //
-  p := &Proxy{ proxy: httputil.NewSingleHostReverseProxy(proxyuri) }
   //proxy := httputil.NewSingleHostReverseProxy(proxyuri)
 
-  log.Printf("Serving %s on %s",proxyuri,serveport)
+  p := &Proxy{ proxy: httputil.NewSingleHostReverseProxy(proxyuri),
+              proxypath: *proxypath }
 
-  http.HandleFunc("/db",p.handle)
-  log.Fatal(http.ListenAndServe(":"+serveport,nil))
+
+  //r:=mux.NewRouter()
+  http.HandleFunc("/"+*proxypath,p.handle)
+  http.Handle("/",http.FileServer(http.Dir(*staticpath)))
+  log.Fatal(http.ListenAndServe(port,nil))
 
 
 }
