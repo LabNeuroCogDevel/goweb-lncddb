@@ -1,0 +1,3 @@
+[submodule "elm-server-interface"]
+	path = elm-server-interface
+	url = git@github.com:LabNeuroCogDevel/elm-server-interface.git
