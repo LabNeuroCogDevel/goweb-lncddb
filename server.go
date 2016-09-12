@@ -41,7 +41,7 @@ func login (w http.ResponseWriter, r *http.Request, sstr string,dbrole string) {
     r.ParseForm()
 
     if ( len(r.Form["user"])==0 || len(r.Form["pass"])==0 ) {
-       http.Error(w, "bad input", http.StatusNotAcceptable)
+       http.Error(w, "\"bad input\"", http.StatusNotAcceptable)
        return
     }
 
@@ -55,7 +55,7 @@ func login (w http.ResponseWriter, r *http.Request, sstr string,dbrole string) {
 
     // return authentication
     if ! isauth {
-       http.Error(w, "Not authorized", http.StatusUnauthorized)
+       http.Error(w, "\"Not authorized\"", http.StatusUnauthorized)
        return
     } else {
        token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -63,7 +63,7 @@ func login (w http.ResponseWriter, r *http.Request, sstr string,dbrole string) {
              "role": dbrole })
        tokenString, err := token.SignedString([]byte(sstr))
        if err == nil {
-         fmt.Fprintf(w, "%s", tokenString)
+         fmt.Fprintf(w, "\"%s\"", tokenString)
        }
        fmt.Println(err)
     }
