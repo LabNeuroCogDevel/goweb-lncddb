@@ -10,9 +10,17 @@ postgrest -j abcd -m 300 postgres://postgres@localhost:5432/lncddb -a web
 ## should fail
 curl localhost:3000/person |jq
 ## success?
-curl localhost:3000/person -H "Range-Unit: items" -H "Range: 0-0" -H "Authorization: Bearer $(curl  localhost:3001/login -d user=test -d pass=test )"|jq
+token=$(curl  localhost:3001/login -d user=test -d pass=test )
+curl localhost:3000/person -H "Range-Unit: items" -H "Range: 0-0" -H "Authorization: Bearer $token"|jq
 ```
 
+## get (and dependencies)
+```
+git clone git@github.com:LabNeuroCogDevel/goweb-lncddb.git
+git submodule update --init --recursive
+git submodule foreach git pull
+go get github.com/LabNeuroCogDevel/ldapauth
+```
 
 ## usage
 ```
@@ -36,15 +44,10 @@ curl localhost:3000/person -H "Range-Unit: items" -H "Range: 0-0" -H "Authorizat
 >     	uri of server to be proxied (default "http://0.0.0.0:3000")
 
 ## usefulness
+
 get a token to access database
 ```
 curl  http://0.0.0.0:3001/login -d 'user=test' -d pass=test
-```
-
-## dependencies
-```
-git submodule foreach git pull
-go get github.com/LabNeuroCogDevel/ldapauth
 ```
 
 ## local devel notes
